@@ -79,7 +79,7 @@ def create_item(woocommerce_item, warehouse, has_variant=0, attributes=None, var
         "has_variants": has_variant,
         "attributes": attributes or [],
         "stock_uom": get_erpnext_uom(woocommerce_item, woocommerce_settings, attributes),
-        "stock_keeping_unit": woocommerce_item.get("sku"), #or get_sku(woocommerce_item),
+        "stock_keeping_unit": item_code if item_code else str(woocommerce_item.get("id")), #or get_sku(woocommerce_item),
         "default_warehouse": warehouse,
         "image": get_item_image(woocommerce_item),
         "weight_uom": weight_unit, #woocommerce_item.get("weight_unit"),
@@ -812,13 +812,13 @@ def add_w_id_to_erp():
     for woocommerce_item in woo_items:
         update_item = """UPDATE `tabItem`
             SET `woocommerce_product_id` = '{0}'
-            WHERE `stock_keeping_unit` = '{1}';""".format(woocommerce_item.get("id"), woocommerce_item.get("sku"))
+            WHERE `item_code` = '{1}';""".format(woocommerce_item.get("id"), woocommerce_item.get("sku"))
         frappe.db.sql(update_item)
         frappe.db.commit()
         for woocommerce_variant in get_woocommerce_item_variants(woocommerce_item.get("id")):
             update_variant = """UPDATE `tabItem`
                 SET `woocommerce_variant_id` = '{0}', `woocommerce_product_id` = '{1}'
-                WHERE `stock_keeping_unit` = '{2}';""".format(woocommerce_variant.get("id"), woocommerce_item.get("id"), woocommerce_variant.get("sku"))
+                WHERE `item_code` = '{2}';""".format(woocommerce_variant.get("id"), woocommerce_item.get("id"), woocommerce_variant.get("sku"))
             frappe.db.sql(update_variant)
             frappe.db.commit()
     make_woocommerce_log(title="IDs synced", status="Success", method="add_w_id_to_erp", message={},
