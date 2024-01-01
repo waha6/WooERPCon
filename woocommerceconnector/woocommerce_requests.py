@@ -83,7 +83,7 @@ def post_request(path, data):
         
         #r.raise_for_status()
         # manually raise for status to get more info from error (message details)
-        if r.status_code != requests.codes.ok:
+        if r.status_code != requests.codes.ok and r.status_code not in [200,201]:
             make_woocommerce_log(title="WooCommerce post error {0}".format(r.status_code), 
                 status="Error", 
                 method="post_request", 
