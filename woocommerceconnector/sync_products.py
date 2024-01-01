@@ -79,7 +79,7 @@ def create_item(woocommerce_item, warehouse, has_variant=0, attributes=None, var
         "has_variants": has_variant,
         "attributes": attributes or [],
         "stock_uom": get_erpnext_uom(woocommerce_item, woocommerce_settings, attributes),
-        "stock_keeping_unit": item_code if item_code else str(woocommerce_item.get("id")), #or get_sku(woocommerce_item),
+        "stock_keeping_unit": item_code if item_code else str(woocommerce_item.get("sku",'')), #or get_sku(woocommerce_item),
         "default_warehouse": warehouse,
         "image": get_item_image(woocommerce_item),
         "weight_uom": weight_unit, #woocommerce_item.get("weight_unit"),
@@ -114,6 +114,8 @@ def create_item(woocommerce_item, warehouse, has_variant=0, attributes=None, var
             new_item = frappe.get_doc(item_dict)
             new_item.insert()
             name = new_item.name
+            new_item.stock_keeping_unit = new_item.name
+            new_item.save()
 
         else:
             update_item(item_details, item_dict)
@@ -474,6 +476,7 @@ def sync_item_with_woocommerce(item, price_list, warehouse, woocommerce_item=Non
             "name": item.get("item_name"),
             "description": item.get("woocommerce_description") or item.get("web_long_description") or item.get("description"),
             "short_description": item.get("description") or item.get("web_long_description") or item.get("woocommerce_description"),
+            "sku":item.get("item_code")
     }
     item_data.update( get_price_and_stock_details(item, warehouse, price_list) )
 
@@ -494,7 +497,7 @@ def sync_item_with_woocommerce(item, price_list, warehouse, woocommerce_item=Non
     erp_item.flags.ignore_mandatory = True
 
     if not item.get("woocommerce_product_id"):
-        item_data["status"] = "draft"
+        item_data["status"] = "publish"
 
         create_new_item_to_woocommerce(item, item_data, erp_item, variant_item_name_list)
 
