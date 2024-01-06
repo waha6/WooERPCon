@@ -18,7 +18,8 @@ def sync_products(price_list, warehouse, sync_from_woocommerce=False):
     woocommerce_settings = frappe.get_doc("WooCommerce Config", "WooCommerce Config")
     woocommerce_item_list = []
     if sync_from_woocommerce:
-        sync_woocommerce_items(warehouse, woocommerce_item_list)
+        pass
+        # sync_woocommerce_items(warehouse, woocommerce_item_list)
     frappe.local.form_dict.count_dict["products"] = len(woocommerce_item_list)
     if woocommerce_settings.if_not_exists_create_item_to_woocommerce == 1:
         sync_erpnext_items(price_list, warehouse, woocommerce_item_list)
