@@ -31,6 +31,8 @@ def sync_woocommerce_orders():
                     try:
                         create_order(woocommerce_order, woocommerce_settings)
                         frappe.local.form_dict.count_dict["orders"] += 1
+                        close_synced_woocommerce_order(woocommerce_order.get("id"),None)
+                        continue
 
                     except woocommerceError as e:
                         make_woocommerce_log(status="Error", method="sync_woocommerce_orders", message=frappe.get_traceback(),
@@ -42,7 +44,7 @@ def sync_woocommerce_orders():
                             make_woocommerce_log(title="New Eror", status="Error", method="sync_woocommerce_orders", message=frappe.get_traceback(),
                                 request_data=woocommerce_order, exception=True)
             # close this order as synced
-            close_synced_woocommerce_order(woocommerce_order.get("id"))
+            close_synced_woocommerce_order(woocommerce_order.get("id"),so)
                 
 def get_woocommerce_order_status_for_import():
     status_list = []
@@ -436,7 +438,7 @@ def close_synced_woocommerce_orders():
     for woocommerce_order in get_woocommerce_orders():
         if woocommerce_order.get("status").lower() != "cancelled":
             order_data = {
-                "status": "completed"
+                "status": "completed" 
             }
             try:
                 put_request("orders/{0}".format(woocommerce_order.get("id")), order_data)
@@ -445,9 +447,13 @@ def close_synced_woocommerce_orders():
                 make_woocommerce_log(title=e, status="Error", method="close_synced_woocommerce_orders", message=frappe.get_traceback(),
                     request_data=woocommerce_order, exception=True)
 
-def close_synced_woocommerce_order(wooid):
+def close_synced_woocommerce_order(wooid,so=None):
+    if so:
+        status = frappe.db.get_value("Sales Order", {"woocommerce_order_id": wooid}, "status")
+        if status.lower()!='closed':
+            return
     order_data = {
-        "status": "completed"
+        "status": "completed" if so else "processing"
     }
     try:
         put_request("orders/{0}".format(wooid), order_data)
