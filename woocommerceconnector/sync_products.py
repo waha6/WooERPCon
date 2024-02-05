@@ -633,12 +633,24 @@ def get_variant_attributes(item, price_list, warehouse):
     return variant_list, options, variant_item_name
 
 def get_price_and_stock_details(item, warehouse, price_list):
-    actual_qty = frappe.db.get_value("Bin", {"item_code":item.get("item_code"), "warehouse": warehouse}, "actual_qty")
-    reserved_qty = frappe.db.get_value("Bin", {"item_code":item.get("item_code"), "warehouse": warehouse}, "reserved_qty")
-    qty = (actual_qty or 0) - (reserved_qty or 0)
+    woocommerce_settings = frappe.get_doc("WooCommerce Config", "WooCommerce Config")
+    # actual_qty = frappe.db.get_value("Bin", {"item_code":item.get("item_code"), "warehouse": warehouse}, "actual_qty")
+    # reserved_qty = frappe.db.get_value("Bin", {"item_code":item.get("item_code"), "warehouse": warehouse}, "reserved_qty")
+    # qty = (actual_qty or 0) - (reserved_qty or 0)
+    bin = get_bin(item.get("item_code"), warehouse)
+
+    actual_qty = bin.actual_qty
+    reserved_qty = bin.reserved_qty
+    qty = actual_qty - reserved_qty
+
+    for warehouseItem in woocommerce_settings.warehouses:
+        if warehouseItem.warehouse != warehouse:
+            _bin = get_bin(item.get("item_code"), warehouseItem.warehouse)
+            qty += (_bin.actual_qty - _bin.reserved_qty)
+
     price = frappe.db.get_value("Item Price", 
             {"price_list": price_list, "item_code": item.get("item_code")}, "price_list_rate")
-
+    
     item_price_and_quantity = {
         "regular_price": "{0}".format(flt(price)) #only update regular price
     }
@@ -763,7 +775,7 @@ def update_item_stock(item_code, woocommerce_settings, bin=None, force=False):
                 qty = actual_qty - reserved_qty
 
                 for warehouse in woocommerce_settings.warehouses:
-                    if warehouse != woocommerce_settings.warehouse:
+                    if warehouse.warehouse != woocommerce_settings.warehouse:
                         _bin = get_bin(item_code, warehouse.warehouse)
                         qty += (_bin.actual_qty - _bin.reserved_qty)
 
