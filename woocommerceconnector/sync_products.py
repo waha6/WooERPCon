@@ -763,8 +763,9 @@ def update_item_stock(item_code, woocommerce_settings, bin=None, force=False):
                 qty = actual_qty - reserved_qty
 
                 for warehouse in woocommerce_settings.warehouses:
-                    _bin = get_bin(item_code, warehouse.warehouse)
-                    qty += (_bin.actual_qty - _bin.reserved_qty)
+                    if warehouse != woocommerce_settings.warehouse:
+                        _bin = get_bin(item_code, warehouse.warehouse)
+                        qty += (_bin.actual_qty - _bin.reserved_qty)
 
 				# bugfix #1582: variant control from WooCommerce, not ERPNext
 				#if item.woocommerce_variant_id and int(item.woocommerce_variant_id) > 0:
