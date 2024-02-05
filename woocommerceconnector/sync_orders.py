@@ -450,7 +450,7 @@ def close_synced_woocommerce_orders():
 def close_synced_woocommerce_order(wooid,so=None):
     if so:
         status = frappe.db.get_value("Sales Order", {"woocommerce_order_id": wooid}, "status")
-        if status.lower()!='closed':
+        if status.lower()!='completed':
             return
     order_data = {
         "status": "completed" if so else "processing"
