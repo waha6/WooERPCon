@@ -766,7 +766,8 @@ def update_item_stock(item_code, woocommerce_settings, bin=None, force=False):
             # removed bin date check
             # check bin creation date
             last_sync_datetime = get_datetime(woocommerce_settings.last_sync_datetime)
-            bin_since_last_sync = frappe.db.sql("""SELECT COUNT(`name`) FROM `tabBin` WHERE `item_code` = '{item_code}' AND `modified` > '{last_sync_datetime}'""".format(item_code=item_code, last_sync_datetime=last_sync_datetime), as_list=True)[0][0]
+            bin_since_last_sync = frappe.db.sql("""SELECT COUNT(`name`) FROM `tabBin` WHERE `item_code` = '{item_code}' AND `modified` > '{last_sync_datetime}'""".format(item_code=item.item_code, last_sync_datetime=last_sync_datetime), as_list=True)[0][0]
+            # make_woocommerce_log(title="Updating Stock checking...2", status="Success", method="update_item_stock", message="""SELECT COUNT(`name`) FROM `tabBin` WHERE `item_code` = '{item_code}' AND `modified` > '{last_sync_datetime}'""".format(item_code=item.item_code, last_sync_datetime=last_sync_datetime),request_data=item_code, exception=True)
             if bin_since_last_sync > 0 or force != False:
                 bin = get_bin(item_code, woocommerce_settings.warehouse)
 
@@ -780,17 +781,23 @@ def update_item_stock(item_code, woocommerce_settings, bin=None, force=False):
                         qty += (_bin.actual_qty - _bin.reserved_qty)
 
 				# bugfix #1582: variant control from WooCommerce, not ERPNext
-				#if item.woocommerce_variant_id and int(item.woocommerce_variant_id) > 0:
-					#item_data, resource = get_product_update_dict_and_resource(item.woocommerce_product_id, item.woocommerce_variant_id, is_variant=True, actual_qty=qty)
-				#else:
-					#item_data, resource = get_product_update_dict_and_resource(item.woocommerce_product_id, item.woocommerce_variant_id, actual_qty=qty)
-                if item.woocommerce_product_id and item.variant_of:
-					# item = variant
-                    template_item = frappe.get_doc("Item", item.variant_of).woocommerce_product_id
-                    item_data, resource = get_product_update_dict_and_resource(template_item, woocommerce_variant_id=item.woocommerce_product_id, is_variant=True, actual_qty=qty)
+                if item.woocommerce_variant_id and int(item.woocommerce_variant_id) > 0:
+                    item_data, resource = get_product_update_dict_and_resource(item.woocommerce_product_id, item.woocommerce_variant_id, is_variant=True, actual_qty=qty)
+                    # make_woocommerce_log(title=resource, status="Success", method="update_item_stock", message=item_code,request_data=item_data, exception=True)
                 else:
-					# item = single
-                    item_data, resource = get_product_update_dict_and_resource(item.woocommerce_product_id, actual_qty=qty)
+                    item_data, resource = get_product_update_dict_and_resource(item.woocommerce_product_id, item.woocommerce_variant_id, actual_qty=qty)
+                    # make_woocommerce_log(title=resource, status="Success", method="update_item_stock", message=item_code,request_data=item_data, exception=True)
+                # make_woocommerce_log(title="starting variant", status="Success", method="update_item_stock", message="",request_data=item_data, exception=True)
+                # if item.woocommerce_variant_id:
+				# 	# item = variant
+                #     # template_item = frappe.get_doc("Item", item.variant_of).woocommerce_product_id
+                #     # TODO: put the exception here for template sync is mandatory
+                #     item_data, resource = get_product_update_dict_and_resource(item.woocommerce_product_id, woocommerce_variant_id=item.woocommerce_variant_id, is_variant=True, actual_qty=qty)
+                    # make_woocommerce_log(title=resource, status="Success", method="update_item_stock", message=item_data,
+                    #         request_data=item, exception=True)
+                # else:
+				# 	# item = single
+                #     item_data, resource = get_product_update_dict_and_resource(item.woocommerce_product_id, actual_qty=qty)
                 try:
 					#make_woocommerce_log(title="Update stock of {0}".format(item.barcode), status="Started", method="update_item_stock", message="Resource: {0}, data: {1}".format(resource, item_data))
                     put_request(resource, item_data)
