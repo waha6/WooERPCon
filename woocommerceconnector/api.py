@@ -39,7 +39,7 @@ def sync_woocommerce_resources():
     make_woocommerce_log(title="Sync Job Queued", status="Queued", method=frappe.local.form_dict.cmd, message="Sync Job Queued")
     
     if woocommerce_settings.enable_woocommerce:
-        make_woocommerce_log(title="Sync Job Started", status="Started", method=frappe.local.form_dict.cmd, message="Sync Job Started")
+        make_woocommerce_log(title="Sync Job Started (v1.0)", status="Started", method=frappe.local.form_dict.cmd, message="Sync Job Started")
         try :
             validate_woocommerce_settings(woocommerce_settings)
             sync_start_time = frappe.utils.now()
