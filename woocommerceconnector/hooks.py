@@ -82,10 +82,10 @@ scheduler_events = {
 	# "hourly": [
 	# 	"woocommerceconnector.api.check_hourly_sync"
 	# ],
-    "daily": [
-        {"time": "09:00", "function": "woocommerceconnector.api.check_hourly_sync"},
-        {"time": "18:00", "function": "woocommerceconnector.api.check_hourly_sync"}
-    ]
+    "cron":{
+	"0 9 * * *": ["woocommerceconnector.api.check_hourly_sync"],
+	"0 18 * * *": ["woocommerceconnector.api.check_hourly_sync"],
+    }
 }
 
 # Testing
